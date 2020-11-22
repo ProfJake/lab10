@@ -228,7 +228,7 @@ app.post('/insert', function(req, res){
 	} else{ //can't move on
 	    calories = "Error! All Fields must have Data";
 	    
-	    let page =  servResp(calories, res);
+//	    let page =  servResp(calories, res);
 	    res.render('insert', { calories: calories});
 //	    res.send(page);
 	}
@@ -281,9 +281,10 @@ app.post('/search', function(req, res){
 		res.end("<br>" + e.message + "<br></body></html>");
 	    }
 	} else{ // can't move on
-	    searchResp(null, res).then(
-		page => {res.send(page)}
-	);
+	   // searchResp(null, res).then(
+	    //	page => {res.send(page)}
+	    //	);
+	    res.render('search');
 	}
     });
 });
