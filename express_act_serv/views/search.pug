@@ -1,0 +1,29 @@
+extends layout
+block content
+ body
+  h2 Search for An Activity
+  form(method="post")
+   select(name="prop")
+    option(value="user") user
+    option(value="activity.type") activity.type
+    option(value="weight") weight
+    option(value="distance") distance
+    option(value="time") time
+   input(name="value")
+   br
+   input(type="submit" value="Search!")
+   |
+   input(type="reset" value="Clear!")
+
+   if results
+     h3 Actvity Search Results for #{results.prop} : #{results[results.prop]}
+     -var count=0
+     each val in results.dataArr
+      p Activity #{count+=1}
+       a(href="/users/" + val.user) #{val.user}
+       |
+       |
+       a(href="/activities/" + val._id) Activity Details |
+       |
+       |
+       |#{val.calories} Calories Burned

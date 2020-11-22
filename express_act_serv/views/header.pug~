@@ -1,0 +1,13 @@
+doctype html
+html(lang="en")
+  head
+      title= "The Activity Web Server"
+  body
+    block content
+
+  block footer
+   
+      a(href='/') Home br
+      a(href='/search') Search br
+      a(href='/insert') Insert br
+

@@ -1,0 +1,16 @@
+extends layout
+block content
+  body
+    if user
+      h2 #{user} Activity 
+    else
+      h2 Activity (Unknown User)
+      
+    h3 Details
+    p #{exercise}  #{weight} lbs | #{distance} miles
+
+    //comments can't be all the way to the left?
+    // ADD THIS LATER IN THE LAB TO DEMONSTRATE Template overriding
+    // block footer   //un-indent to override
+
+    //p This comes from Activity.pug

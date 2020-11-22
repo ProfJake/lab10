@@ -1,0 +1,18 @@
+extends layout
+block content
+ body
+  h2 Search for An Activity
+  form(method="post")
+   select(name="prop")
+    option(value="user") user
+    option(value="activity.type") activity.type
+    option(value="weight") weight
+    option(value="distance") distance
+    option(value="time") time
+
+    input(type="submit" value="Search!")
+    |
+    input(type="reset" value="Clear!")
+
+     if results
+       h3 Actvity Search Results for #{results.prop} : #{results[results.prop]}

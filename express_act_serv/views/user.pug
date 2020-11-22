@@ -1,0 +1,20 @@
+extends layout
+block content
+  body
+    if user
+      h2 #{user._id} Activities List
+    else
+      h2 Error!
+      
+    h3 List of All Activities
+    #activities
+      each item in activities
+        #activity
+          p #{item.activity.type}: #{item.distance} miles in  #{item.time} minutes
+          p <strong> Calories Burned:</strong> #{item.calories}
+      
+    //comments can't be all the way to the left?
+    // ADD THIS LATER IN THE LAB TO DEMONSTRATE Template overriding
+    // block footer   //un-indent to override
+
+    //p This comes from user.pug

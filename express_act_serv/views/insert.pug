@@ -1,0 +1,30 @@
+extends layout   
+block content
+  body  <!-- The '|' char is used for "whitespace control" in pug -->
+    h2 Fill out your Activity
+    form(method="POST")
+      p <!-- Pipes have to line up -->
+        | User Name:
+        input(name="user" value='')
+        br
+        | Activity:
+        select(name="activity")
+          option(name="running" value="running") Running
+          option(name="walking" value="walking") Walking
+          option(name="swimming" value="swimming") Swimming
+        br
+        | Weight (in pounds):
+        input(name="weight" value='')
+        br
+        | Distance (in miles):
+        input(name="distance")
+        br
+        | Time (in minutes):
+        input(name="time")
+        br
+        input(type="submit" value="Insert!")
+        input(type="reset" value="Clear!")
+
+        if calories
+          #calories
+            h3 Calories Burned: #{calories}
