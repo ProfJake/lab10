@@ -6,3 +6,5 @@ but useful for our purposes)
 
 Use this to generate passwords for users in your practiceDB.
 
+Checked with:
+https://passwordsgenerator.net/sha256-hash-generator/

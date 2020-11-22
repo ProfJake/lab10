@@ -31,7 +31,7 @@ function docifyActivity(params){
 
 //The same server response from the activity_server lab
 //this time it is specifically used for db inserts
-function servResp( calories, res){
+/*function servResp( calories, res){
 let page = '<html><head><title>The Activity Server</title></head>'+
 '<body> <form method="post">'+
 '<h1>Fill out your Activity</h1>'+
@@ -49,14 +49,14 @@ let page = '<html><head><title>The Activity Server</title></head>'+
 page+='<br><br><a href="./search">Search</a></body></html>';
 
 return page;
-}
+}*/
 //This function is for searching. Because we want the page to finish
 //generating before it is returned, this function is labeled async
 //so that we can "await" the results of fulfillment for processing all items
 
 //this has the side effect of making this function return a Promise so we
 //will access the result using then syntax
-async function searchResp(result, response){
+/*async function searchResp(result, response){
 let page = '<html><head><title>The Activity Server</title></head>'+
 '<body> <form method="post">'+
 '<h1>Search for an Activity</h1>'+
@@ -90,7 +90,7 @@ let page = '<html><head><title>The Activity Server</title></head>'+
 page+='<br><br><a href="/insert">home/insert</a></body></html>';
   
     return page;
-}
+}*/
 var postParams;
 function moveOn(postData){
     let proceed = true;
@@ -123,6 +123,10 @@ app.set('view engine', 'pug');
 app.get('/', function (req, res){
     res.end('<html><body><br><br><a href="/insert">home/insert</a>&emsp;&emsp;<a href="/search">sea\
 rch Page</a></body></html>');
+});
+
+app.get('/login', function(req, res, next){
+
 });
 app.get('/insert', function (req, res){
     let page = servResp(null, res);
