@@ -168,7 +168,7 @@ app.get('/users/:userID', async (req, res)=> {
 	    actArr[item].calories = current.calculate();
 	    console.log("Calories: " + current.calculate());
 	}
-	res.render('user', { user: user, activities: actArr});
+	res.render('user', { searchID: user._id, activities: actArr});
     }catch (err){
 	console.log(err.message);
 	res.status(500).send("Error 500");
@@ -184,7 +184,7 @@ app.get('/activities/:actID', async function(req, res){
 	let result = await col.findOne({ _id: ObjectID(req.params.actID) });
 	console.log(result);
 
-	res.render('activity', { user: result.user, exercise: result.activity.type, distance: result.distance, weight: result.weight })
+	res.render('activity', { searchID: result.user, exercise: result.activity.type, distance: result.distance, weight: result.weight })
     }catch(e){
 	console.log(e.message);
     }
