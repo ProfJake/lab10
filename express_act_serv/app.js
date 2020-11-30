@@ -129,7 +129,7 @@ app.get('/login', function(req, res, next){
 
 });
 app.get('/insert', function (req, res){
-    let page = servResp(null, res);
+   // let page = servResp(null, res);
     //    res.send(page);
     res.render('insert');
 });
