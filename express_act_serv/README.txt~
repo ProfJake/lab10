@@ -6,6 +6,5 @@ tracker (version 1.5+. TGZ file available in node_modules folder) - a class repr
 mongodb (available via npm) - storage for activities and users
 express (available via npm) - Middleware and Routing for Node applications.
 pug (available via npm) - templating engine for generating HTML pages
-express-session (available via npm) - Middleware for simple sessions
-body-parser (available via npm) - Middleware for parsing incoming POST data
+
 
