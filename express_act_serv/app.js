@@ -106,9 +106,7 @@ app.get('/insert', function (req, res){
 //Express to process caught errors.  Passing errors to the "next" function
 //allows Express to catch them and do its own error handling
 
-//using the Express Error handler is not required and it really only prints
-//a stack trace of the error (the series of called functions that generated
-//the error).  But if you want only basic error handling, you can use it
+//Signup only appears to users who haven't logged in
 app.get('/signup', (req, res, next)=>{
 	if (req.session.user){
 		res.redirect('/');
@@ -195,22 +193,24 @@ app.post('/signup', bp.urlencoded({extended: false}), async (req, res, next)=>{
 	//Lookup users by email and see if the email is already registered
 
 	 exists = await dbManager.get().collection("users").findOne({email: req.body.email}, {_id:0, email: 1});
-	
-	} catch (err){//
+	//if no email is found, exists is null
+	} catch (err){
+		//catch any weird DB errors
 		console.log(err.message);
-		console.log("This is the error")
 	}finally{
 		if (exists)	{
+			//use standard error template
 			res.render('error', {errorStat: 500, errorMSG: `${req.body.email} Already Exists in DB`});
 		 }
 		else {
-			console.log()
 			try{
 			await dbManager.get().collection("users").insertOne(newUser)
 			} catch (err){
+				//incase the user name is already in the DB (throws error)
 				console.log(err)
 				res.render('error',{errorStat: 500, errorMSG: `${err.message}`} )
 			}
+			//otherwise ask them to login
 			res.redirect('/login')
 		}
 	}
