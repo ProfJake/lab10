@@ -1,0 +1,22 @@
+extends layout   
+block content
+  body  <!-- The '|' char is used for "whitespace control" in pug -->
+    h2 Fill out your Information
+    form(method="POST")
+      p <!-- Pipes have to line up -->
+        | User Name:
+        input(name="user" value='')
+        br
+        | Email:
+        input(name="email" value='')
+        br
+        |  Name: 
+        input(name="name")
+        br
+        | Age (in years):
+        input(name="age")
+        br
+        input(type="submit" value="Submit!")
+        input(type="reset" value="Clear!")
+
+        

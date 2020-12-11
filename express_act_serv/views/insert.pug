@@ -5,7 +5,7 @@ block content
     form(method="POST")
       p <!-- Pipes have to line up -->
         | User Name:
-        input(name="user" value='')
+        input(name="user" value=''+trustedUser._id)
         br
         | Activity:
         select(name="activity")

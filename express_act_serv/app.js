@@ -13,84 +13,34 @@ Instead we can create an instance of the Express routing "app"
 and tell it which combination of Routes and HTTP methods 
 to which we want it to respond*/
 var tracker = require("tracker");
+let crypto= require("crypto");
 var http = require("http");
 var qString = require("querystring");
 //this calls the let db={}; and instantiates the db for us
 let dbManager = require('./dbManager');
 let express = require("express");
+let session = require("express-session");
+let bp = require("body-parser");
 let app = express();
 var ObjectID = require('mongodb').ObjectId;
+var mongoNum = require('mongodb').Number;
+
+let localUser;
 //This will take a set of properties that are coming in from a "POST"
 //And transform them into a document for inserting into the "activities"
 // collection
+function genHash(input){
+    return Buffer.from(crypto.createHash('sha256').update(input).digest('base32')).toString('hex').toUpperCase();
+}
 function docifyActivity(params){
     let doc = { activity: { type: params.activity }, weight: params.weight,
 		distance: params.distance, time: params.time, user: params.user};
     return doc;
 }
-
-//The same server response from the activity_server lab
-//this time it is specifically used for db inserts
-/*function servResp( calories, res){
-let page = '<html><head><title>The Activity Server</title></head>'+
-'<body> <form method="post">'+
-'<h1>Fill out your Activity</h1>'+
-'User Name <input name="user"><br>'+
-'Activity Name <select name="activity"><option>Running</option><option>Walking</option><option>Swimming</option></select><br>'+
-'Weight (in pounds) <input name="weight"><br>' +
-'Distance (in miles) <input name="distance"><br>'+
-'Time (in minutes) <input name="time"><br>' +
-'<input type="submit" value="Insert!">' +
-'<input type="reset" value="Clear">'+
-'</form>';
-    if (calories){
-     page+='<div id="calories"><h3> Calories Burned: ' + calories + '</h3></div>';
-    }
-page+='<br><br><a href="./search">Search</a></body></html>';
-
-return page;
-}*/
-//This function is for searching. Because we want the page to finish
-//generating before it is returned, this function is labeled async
-//so that we can "await" the results of fulfillment for processing all items
-
-//this has the side effect of making this function return a Promise so we
-//will access the result using then syntax
-/*async function searchResp(result, response){
-let page = '<html><head><title>The Activity Server</title></head>'+
-'<body> <form method="post">'+
-'<h1>Search for an Activity</h1>'+
-'Property <select name="prop">'+
-'<option>user</option>' +
-'<option>activity.type</option>' +
-'<option>weight</option>' +
-'<option>distance</option>' +
-'<option>time</option>' +
-'</select>'+
-'  <input name="value">'+
-'<input type="submit" value="Search!">' +
-'<input type="reset" value="Clear">'+
-'</form>';
-
-    if (result){
-
-	page+=`<h2>Activities for ${result.prop}: ${result[result.prop]}</h2>`
-	let count = 0;
-	//the await must be wrapped in a try/catch in case the promise rejects
-	try{
-	await result.data.forEach((item) =>{
-		let curAct = new tracker(item.activity.type, item.weight, item.distance, item.time);
-	    page+=` Activity ${++count}:  <a href="/users/${item.user}">${item.user}</a>  <a href="/activities/${item._id}">Details</a> | ${curAct.calculate()} Calories Burned <br>` ;
-	    });
-	} catch (e){
-	    page+=e.message;
-	    throw e;
-	}
-    }
-page+='<br><br><a href="/insert">home/insert</a></body></html>';
-  
-    return page;
-}*/
+function received(req, res, next){
+	console.log("Request for " + req.url+ " Page " + new Date().toLocaleTimeString("en-US", { timeZone: "America/New_york"}));
+	next();
+}
 var postParams;
 function moveOn(postData){
     let proceed = true;
@@ -114,24 +64,42 @@ function moveOn(postData){
 //be used to end the cycle
 app.set('views', './views');
 app.set('view engine', 'pug');
-
+app.use(received);
+app.use(session({
+	secret:'shhhhh',
+	saveUninitialized: false,
+	resave: false
+}));
 //GET ROUTES
 //These callback functions in "Express syntax" are called "middleware" functions.
 //They sit "in the middle" between your app's backend end functionality
 //(in this case, the simple Activity Class, MongoDB, and/or the local
 //"server" filesystem) and the client.  Middleware function's 
 app.get('/', function (req, res){
-    res.end('<html><body><br><br><a href="/insert">home/insert</a>&emsp;&emsp;<a href="/search">sea\
-rch Page</a></body></html>');
+	if (!req.session.user){
+		res.redirect('/login');
+	} else {
+   // res.end('<html><body><br><br><a href="/insert">home/insert</a>&emsp;&emsp;<a href="/search">search Page</a></body></html>');
+		res.render('index', { trustedUser: localUser });
+	}
+//console.log(req.session.id);
 });
 
 app.get('/login', function(req, res, next){
-
+if (req.session.user){
+	res.redirect('/');
+} else {
+	res.render('login')
+}
 });
 app.get('/insert', function (req, res){
    // let page = servResp(null, res);
-    //    res.send(page);
-    res.render('insert');
+	//    res.send(page);
+	if (!req.session.user){
+		res.redirect('/login');
+	} else {
+	res.render('insert', {trustedUser: localUser});
+	}
 });
 //demonstrates error handling with Express
 //This error is unlikely but this middleware function demonstrates how to use
@@ -141,17 +109,32 @@ app.get('/insert', function (req, res){
 //using the Express Error handler is not required and it really only prints
 //a stack trace of the error (the series of called functions that generated
 //the error).  But if you want only basic error handling, you can use it
+app.get('/signup', (req, res, next)=>{
+	if (req.session.user){
+		res.redirect('/');
+	}else {
+		res.render('signup');
+	}
+
+})
 app.get('/search', function(req, res, next){
 //    searchResp(null, res).then(
 //	page=> {    res.send(page); }
-    //    ).catch(next);
-    res.render('search');
+	//    ).catch(next);
+	if (!req.session.user){
+		res.redirect('/login');
+	} else {
+	res.render('search', { trustedUser: localUser});
+	}
 });
 app.param('actID', function(req, res, next, value){
     console.log(`Request for activity ${value}`);
     next();
 });
 app.get('/users/:userID', async (req, res)=> {
+	if (!req.session.user){
+		res.redirect('/login');
+	} else {
     let users = dbManager.get().collection("users");
     let activities = dbManager.get().collection("activities");
 
@@ -168,30 +151,88 @@ app.get('/users/:userID', async (req, res)=> {
 	    actArr[item].calories = current.calculate();
 	    console.log("Calories: " + current.calculate());
 	}
-	res.render('user', { searchID: user._id, activities: actArr});
+	res.render('user', { trustedUser: localUser, searchID: user._id, activities: actArr});
     }catch (err){
 	console.log(err.message);
-	res.status(500).send("Error 500");
+	res.status(500).render('error', {trustedUser: localUser, errorStat: 500, errorMSG: err.message});
     }
 
-    
+}
     
 });
 app.get('/activities/:actID', async function(req, res){
-   
+	if (!req.session.user){
+		res.redirect('/login');
+	} else {
     let col = dbManager.get().collection("activities");
     try{
 	let result = await col.findOne({ _id: ObjectID(req.params.actID) });
 	console.log(result);
 
-	res.render('activity', { searchID: result.user, exercise: result.activity.type, distance: result.distance, weight: result.weight })
+	res.render('activity', { trustedUser: localUser, searchID: result.user, exercise: result.activity.type, distance: result.distance, weight: result.weight })
     }catch(e){
 	console.log(e.message);
-    }
+	}
+}
 });
 var postData;
 
 //POST ROUTES
+app.post('/signup', bp.urlencoded({extended: false}), async (req, res, next)=>{
+	//1) sending the user an email to verify is the best course of action
+	//then only entering a new user When its verified by clicking a link in the email
+	//(obviously you need a route to match that link)
+
+	//2) otherwise you could always immediately enter a user into a special "nerfed" collection. 
+	//Users in "nerfed" have limited access and permissions until they verify email, at which
+	//point they could be moved into a "full membership" collection
+	let exists;
+	let newUser;
+	let check = false;
+	
+	newUser = {_id: req.body.user, name: req.body.name, email: req.body.email, age: Number(req.body.age), email_verified: false};
+	try{
+	//Lookup users by email and see if the email is already registered
+
+	 exists = await dbManager.get().collection("users").findOne({email: req.body.email}, {_id:0, email: 1});
+	
+	} catch (err){//
+		console.log(err.message);
+		console.log("This is the error")
+	}finally{
+		if (exists)	{
+			res.render('error', {errorStat: 500, errorMSG: `${req.body.email} Already Exists in DB`});
+		 }
+		else {
+			console.log()
+			try{
+			await dbManager.get().collection("users").insertOne(newUser)
+			} catch (err){
+				console.log(err)
+				res.render('error',{errorStat: 500, errorMSG: `${err.message}`} )
+			}
+			res.redirect('/login')
+		}
+	}
+})
+//add another get or post to respond email ling
+app.post('/login', bp.urlencoded({extended: false}), async ( req, res, next)=>{
+let untrusted = {user: req.body.userName, password: genHash(req.body.password)};
+try{
+	let result = await dbManager.get().collection("users").findOne({_id: req.body.userName})
+
+	if (untrusted.password.toString().toUpperCase() == result.password.toString().toUpperCase()){
+		let trusted={ name: result._id.toString()};
+		req.session.user = trusted;
+		//app.locals.user = result;
+		localUser = result;
+		res.redirect('/');
+		}
+	} catch (err){
+	console.log(err.message)
+	next(err);
+}
+});
 app.post('/insert', function(req, res){
     postData = '';
     req.on('data', (data) =>{
@@ -220,20 +261,20 @@ app.post('/insert', function(req, res){
 		    let result = await col.insertOne(curDoc);
 		    //return calories as response (Success)
 //		    let page =  servResp(calories, res);
-		    res.render('insert', { calories: calories});
+		    res.render('insert', { trustedUser: localUser, calories: calories});
 		    console.log(result); //log result for viewing
 		} catch (err){
 		    calories = "ERROR! Please enter appropriate data";
 		    console.log(err.message);
 //		    let page = servResp(calories, res);
-		    res.render('insert', { calories: calories});
+		    res.render('insert', { trustedUser: localUser, calories: calories});
 		    //res.send(page);
 		}
 	} else{ //can't move on
 	    calories = "Error! All Fields must have Data";
 	    
 //	    let page =  servResp(calories, res);
-	    res.render('insert', { calories: calories});
+	    res.render('insert', { trustedUser: localUser, calories: calories});
 //	    res.send(page);
 	}
     });
@@ -273,7 +314,7 @@ app.post('/search', function(req, res){
 		})
 		let resultOBJ={dataArr: data , [prop]  : val, prop: prop};
 
-		res.render('search', {results: resultOBJ});
+		res.render('search', { trustedUser: localUser, results: resultOBJ});
 		
 //		searchResp(resultOBJ, res).then( page =>
 //						  {res.send(page)
@@ -288,7 +329,7 @@ app.post('/search', function(req, res){
 	   // searchResp(null, res).then(
 	    //	page => {res.send(page)}
 	    //	);
-	    res.render('search');
+	    res.render('search', {trustedUser: localUser});
 	}
     });
 });
@@ -296,8 +337,13 @@ app.post('/search', function(req, res){
 //gets matched early then it won't match later routes.  So
 //RUNS for any ROUTE not matched to those methods above
 app.use('*', function(req, res){
+
     res.writeHead(404);
     res.end(`<h1> ERROR 404. ${req.url} NOT FOUND</h1><br><br>`);
+});
+app.use(function(err, req, res, next){
+	res.writeHead(500);//internal server error
+	res.render('error', {trustedUser: localUser, errorStat: 500, errorMSG: err.message});
 });
 
 
