@@ -349,7 +349,7 @@ app.use(function(err, req, res, next){
 
 //Express listen function is literally the HTTP server listen method
 //so we can do the exact same things with it as before
-app.listen(6900, async ()=> {
+app.listen(3000, async ()=> {
     //start and wait for the DB connection
     try{
         await dbManager.get("practiceDB");
