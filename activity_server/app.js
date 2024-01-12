@@ -217,21 +217,31 @@ app.post('/signup', bp.urlencoded({extended: false}), async (req, res, next)=>{
 })
 //add another get or post to respond email ling
 app.post('/login', bp.urlencoded({extended: false}), async ( req, res, next)=>{
-let untrusted = {user: req.body.userName, password: genHash(req.body.password)};
-try{
-	let result = await dbManager.get().collection("users").findOne({_id: req.body.userName})
+    let foundUser;
+    let untrusted = {user: req.body.userName, password: genHash(req.body.password)};
+    try{
+	foundUser = await dbManager.get().collection("users").findOne({_id: req.body.userName})
+	//Handle mising user returned (bad username)
+	if (!foundUser){
+	    let err = new Error("User Not Found")
+	    err.statusCode = 404
+	    throw err
+	}
 
-	if (untrusted.password.toString().toUpperCase() == result.password.toString().toUpperCase()){
-		let trusted={ name: result._id.toString()};
-		req.session.user = trusted;
-		//app.locals.user = result;
-		localUser = result;
-		res.redirect('/');
-		}
-	} catch (err){
+    } catch (err){
 	console.log(err.message)
 	next(err);
-}
+    }
+
+    if (foundUser) {
+    if (untrusted.password.toString().toUpperCase() == foundUser.password.toString().toUpperCase()){
+	let trusted={ name: foundUser._id.toString()};
+	req.session.user = trusted;
+	//app.locals.user = result;
+	localUser = foundUser;
+	res.redirect('/');
+    }
+    }
 });
 app.post('/insert', function(req, res){
     postData = '';
@@ -338,12 +348,12 @@ app.post('/search', function(req, res){
 //RUNS for any ROUTE not matched to those methods above
 app.use('*', function(req, res){
 
-    res.writeHead(404);
+//    res.writeHead(404);
     res.end(`<h1> ERROR 404. ${req.url} NOT FOUND</h1><br><br>`);
 });
+
 app.use(function(err, req, res, next){
-	res.writeHead(500);//internal server error
-	res.render('error', {trustedUser: localUser, errorStat: 500, errorMSG: err.message});
+	res.render('error', {trustedUser: localUser, errorStat: err.statusCode, errorMSG: err.message});
 });
 
 
@@ -353,6 +363,7 @@ app.listen(3000, async ()=> {
     //start and wait for the DB connection
     try{
         await dbManager.get("practiceDB");
+	console.log("Connected to DB");
     } catch (e){
         console.log(e.message);
     }
